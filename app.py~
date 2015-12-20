@@ -28,7 +28,7 @@ def index():
         app.vars['ticker'] = request.form['ticker']
         app.vars['features'] = request.form.getlist('features')
 
-        # Request stock data from Quandl
+        # Pull stock data
         url = 'https://www.quandl.com/api/v3/datasets/WIKI/' + app.vars['ticker'] + '/data.json'
         r = requests.get(url)
         data = r.json()['dataset_data']['data']
