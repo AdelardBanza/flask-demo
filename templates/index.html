@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>The Stock Ticker</title>
+		<title>The Stock Ticker Query</title>
     <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.10.0.min.css" rel="stylesheet" type="text/css">
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.10.0.min.js"></script>
@@ -25,7 +25,7 @@
         {% endif %}
         <div class="col-xs-4">
           <form method="get" action="/">
-            <b>Please enter a stock ticker eg. GOOG, and check desired features.</b> <br/>
+            <b>Please enter a stock ticker eg. AAPL, and check desired features.</b> <br/>
             Ticker symbol: <input type="text" name="symbol" value="{{stock_name}}"/> <br/>
             <input type="checkbox" name="features" value="Close">Closing price<br>
             <input type="checkbox" name="features" value="Adj. Close">Adjusted closing price<br>
