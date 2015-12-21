@@ -1,57 +1,43 @@
-from flask import Flask, render_template, request, redirect
-from bokeh.embed import components
+import Quandl
 from bokeh.plotting import figure
-from bokeh.resources import INLINE
-from bokeh.templates import RESOURCES
-from bokeh.util.string import encode_utf8
-import requests
-import pandas as pd
+from bokeh.embed import components
+from bokeh.palettes import Spectral6, RdYlGn4
+
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-app.vars = {}
-
-app.vars['color'] = {
-    'Close': 'navy',
-    'Adj. Close': 'red'
-}
-
 @app.route('/')
-def main():
-    return redirect('/index')
-
-@app.route('/index', methods=['GET', 'POST'])
 def index():
-    if request.method == 'GET':
-        return render_template('index.html')
-    else:
-        app.vars['ticker'] = request.form['ticker']
-        app.vars['features'] = request.form.getlist('features')
+  # Read the query string to get the name of the object
+  if "symbol" not in request.args:
+      # If symbol wasn't given, return the empty template
+      return render_template('index.html')
 
-        # Request stock data from Quandl
-        url = 'https://www.quandl.com/api/v3/datasets/WIKI/' + app.vars['ticker'] + '/data.json'
-        r = requests.get(url)
-        data = r.json()['dataset_data']['data']
-        cols = r.json()['dataset_data']['column_names']
-        app.vars['data'] = pd.DataFrame(data, columns=cols)
-        return redirect('/graph')
+  #Parse "features" for getting a list of the attributes to show, use that instead of just "Open"
+  features =request.args.getlist('features')
 
-@app.route('/graph', methods=['GET'])
-def graph():
-    df = app.vars['data']
+  # We were given the symbol
+  stock_name = request.args["symbol"]
+  quandl_stock_name = "WIKI/{}".format(stock_name)
 
-    p = figure(width=650, height=500, x_axis_type="datetime",
-                title="Data from Quandle WIKI set")
-    for category in app.vars['features']:
-        p.line(pd.to_datetime(df['Date']), df[category], color=app.vars['color'][category], line_width=1, legend=app.vars['ticker'] + ": " + category)
+  # Call Quandl to get the stock
+  dat = Quandl.get(quandl_stock_name, authtoken="yzAhKxDrgCxKzjj_zpas
+")
+  #dat = dat["Open"]
 
-    p.legend.orientation = "top_right"
+  # Create bokeh graph using `figure()`
+  p = figure(x_axis_type="datetime", plot_width=700)
 
-    plot_resources = RESOURCES.render(js_raw=INLINE.js_raw, css_raw=INLINE.css_raw, js_files=INLINE.js_files, css_files=INLINE.css_files)
+  #Plot several figures, not just one
+  for i_f, f in enumerate(features):
+      p.line(dat.index, dat[f], line_width=2, color=RdYlGn4[i_f], legend=f)
 
-    script, div = components(p, INLINE)
-    html = render_template('graph.html', ticker=app.vars['ticker'], plot_script=script, plot_div=div, plot_resources=plot_resources)
-    return encode_utf8(html)
+  # Call `components` on this graph
+  script, div = components(p)
+
+  # Insert these variables into the template
+  return render_template('index.html', stock_name = stock_name, dat_script = script, dat_div = div)
 
 if __name__ == '__main__':
-    app.run(port=33507)
+  app.run(host='0.0.0.0', debug=True, port=33507)
